@@ -219,16 +219,16 @@
       '</div>' +
       '<div id="bcm3-count">Loading...</div>' +
       '<select id="bcm3-project-sel"><option>Loading...</option></select>' +
-      '<button id="bcm3-refresh-btn">Refresh Projects</button>' +
-      '<button id="bcm3-selall-btn">Select / Deselect All</button>' +
-      '<button id="bcm3-move-btn">Move Selected to Project</button>' +
-      '<button id="bcm3-close-btn">Close</button>' +
+      '<button id="bcm3-refresh-btn">↻ Refresh Projects</button>' +
+      '<button id="bcm3-selall-btn">☑ Select / Deselect All</button>' +
+      '<button id="bcm3-move-btn">➜ Move Selected to Project</button>' +
+      '<button id="bcm3-close-btn">✕ Close</button>' +
       '<div id="bcm3-status">Ready</div>';
     document.body.appendChild(panel);
-    var allSel = false;
     document.getElementById('bcm3-selall-btn').addEventListener('click', function() {
-      allSel = !allSel;
-      document.querySelectorAll('.bcm3-cb').forEach(function(cb) { cb.checked = allSel; });
+      var cbs = Array.from(document.querySelectorAll('.bcm3-cb'));
+      var shouldSelectAll = cbs.some(function(cb) { return !cb.checked; });
+      cbs.forEach(function(cb) { cb.checked = shouldSelectAll; });
       updateCount();
     });
     document.getElementById('bcm3-refresh-btn').addEventListener('click', function() {
