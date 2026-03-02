@@ -40,9 +40,13 @@
     style.id = 'bcm3-style';
     style.textContent = [
       ':root { --bcm3-bg:#0a0a0a; --bcm3-panel:#111111; --bcm3-border:#262626; --bcm3-text:#fafafa; --bcm3-muted:#a3a3a3; --bcm3-focus:#525252; }',
-      '.bcm3-wrap { display:flex; align-items:center; gap:4px; }',
+      '.bcm3-wrap { display:flex; align-items:center; gap:4px; padding-left:8px; }',
       '.bcm3-wrap > a { flex:1; min-width:0; }',
-      '.bcm3-cb { width:14px; height:14px; min-width:14px; cursor:pointer; accent-color:#f5f5f5; margin:0 3px 0 2px; flex-shrink:0; z-index:10; }',
+      '.bcm3-cb { -webkit-appearance:none; appearance:none; width:14px; height:14px; min-width:14px; margin:0 3px 0 2px; flex-shrink:0; z-index:10; cursor:pointer; border:1px solid #3f3f46; border-radius:4px; background:#111111; display:inline-grid; place-content:center; transition:border-color .14s ease, background-color .14s ease, transform .14s ease; }',
+      '.bcm3-cb:hover { border-color:#737373; background:#171717; }',
+      '.bcm3-cb:focus-visible { outline:2px solid #525252; outline-offset:1px; }',
+      '.bcm3-cb:checked { background:#fafafa; border-color:#fafafa; }',
+      '.bcm3-cb:checked::after { content:""; width:7px; height:4px; border:2px solid #111111; border-top:0; border-right:0; transform:rotate(-45deg) translate(1px,-1px); }',
       '#bcm3-panel { position:fixed; right:20px; bottom:20px; width:320px; z-index:999999; color:var(--bcm3-text); font-family:"Geist","SF Pro Text","Segoe UI",sans-serif; font-size:13px; border:1px solid var(--bcm3-border); border-radius:14px; padding:14px; background:radial-gradient(560px 200px at -5% -70%, #1f2937 0%, transparent 58%), radial-gradient(420px 170px at 105% 130%, #1f2937 0%, transparent 60%), color-mix(in srgb, var(--bcm3-panel) 94%, transparent); box-shadow:0 16px 44px rgba(0,0,0,0.45); backdrop-filter:blur(8px); }',
       '#bcm3-head { margin-bottom:10px; }',
       '#bcm3-kicker { display:inline-flex; align-items:center; border:1px solid #343434; border-radius:999px; padding:2px 7px; margin-bottom:7px; color:#d4d4d4; font-size:10px; letter-spacing:.06em; text-transform:uppercase; background:#171717; }',
