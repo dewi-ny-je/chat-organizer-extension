@@ -94,6 +94,156 @@
     var el = document.getElementById('bcm3-count');
     if (el) el.textContent = checked + ' of ' + all + ' chats selected';
   }
+  var BCM3_QUEUE_KEY = 'bcm3-move-queue-v1';
+  var bcm3QueueRunning = false;
+  function readMoveQueue() {
+    try {
+      var raw = sessionStorage.getItem(BCM3_QUEUE_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch (e) { return null; }
+  }
+  function writeMoveQueue(queue) {
+    try { sessionStorage.setItem(BCM3_QUEUE_KEY, JSON.stringify(queue)); } catch (e) {}
+  }
+  function clearMoveQueue() {
+    try { sessionStorage.removeItem(BCM3_QUEUE_KEY); } catch (e) {}
+  }
+  function convIdFromHref(href) {
+    var m = (href || '').match(/[/]c[/]([^?#/]+)/);
+    return m && m[1] || '';
+  }
+  function findChatLinkByConvId(convId) {
+    if (!convId) return null;
+    var links = Array.from(document.querySelectorAll('nav a[href*="/c/"]'));
+    return links.find(function(a) {
+      return convIdFromHref(a.getAttribute('href') || a.href) === convId;
+    }) || null;
+  }
+  function enqueueCurrentSelection(projectId, projectName) {
+    var items = Array.from(document.querySelectorAll('.bcm3-cb:checked')).map(function(cb) {
+      return {
+        convId: cb.dataset.convId,
+        title: (cb.dataset.title || '').substring(0, 25)
+      };
+    }).filter(function(x) { return !!x.convId; });
+    var queue = {
+      projectId: projectId,
+      projectName: projectName,
+      items: items,
+      index: 0,
+      moved: 0,
+      startedAt: Date.now()
+    };
+    writeMoveQueue(queue);
+    return queue;
+  }
+  function getVisibleMenuItems() {
+    return Array.from(document.querySelectorAll('[role="menuitem"]')).filter(function(el) {
+      var style = window.getComputedStyle(el);
+      if (style.display === 'none' || style.visibility === 'hidden') return false;
+      var r = el.getBoundingClientRect();
+      return r.width > 0 && r.height > 0;
+    });
+  }
+  function findMenuButtonForChatLink(link) {
+    if (!link) return null;
+    var row = link.closest('li') || link.parentElement;
+    if (!row) return null;
+    return row.querySelector('button.__menu-item-trailing-btn')
+      || row.querySelector('button[aria-haspopup="menu"]')
+      || row.querySelector('button[aria-label*="options" i]')
+      || row.querySelector('button[aria-label*="menu" i]')
+      || row.querySelector('button');
+  }
+  async function processMoveQueue() {
+    if (bcm3QueueRunning) return;
+    var queue = readMoveQueue();
+    if (!queue || !queue.items || !queue.items.length) return;
+    bcm3QueueRunning = true;
+    try {
+      var total = queue.items.length;
+      setStatus('Resuming queue: ' + (queue.index + 1) + '/' + total);
+      while (queue.index < total) {
+        var item = queue.items[queue.index];
+        var title = item.title || item.convId || '';
+        var link = null;
+        for (var r = 0; r < 12; r++) {
+          link = findChatLinkByConvId(item.convId);
+          if (link) break;
+          await delay(250);
+        }
+        if (!link) {
+          setStatus('[' + (queue.index + 1) + '/' + total + '] Chat not found: "' + title + '" (skip)');
+          queue.index++;
+          writeMoveQueue(queue);
+          continue;
+        }
+        link.scrollIntoView({ behavior: 'instant', block: 'center' });
+        await delay(260);
+        realHover(link);
+        await delay(380);
+        var btn = findMenuButtonForChatLink(link);
+        if (!btn) {
+          setStatus('[' + (queue.index + 1) + '/' + total + '] No menu button: "' + title + '" (skip)');
+          queue.index++;
+          writeMoveQueue(queue);
+          continue;
+        }
+        setStatus('[' + (queue.index + 1) + '/' + total + '] Moving "' + title + '"...');
+        realClick(btn);
+        await delay(500);
+        var moveItem = null;
+        for (var w = 0; w < 20; w++) {
+          var items = getVisibleMenuItems();
+          moveItem = items.find(function(el) {
+            return el.textContent.trim().indexOf('Move to project') === 0;
+          });
+          if (moveItem) break;
+          await delay(150);
+        }
+        if (!moveItem) {
+          setStatus('[' + (queue.index + 1) + '] "Move to project" not found');
+          document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+          await delay(240);
+          queue.index++;
+          writeMoveQueue(queue);
+          continue;
+        }
+        realHover(moveItem);
+        realClick(moveItem);
+        await delay(520);
+        var projItem = null;
+        var pName = (queue.projectName || '').toLowerCase();
+        for (var w2 = 0; w2 < 18; w2++) {
+          var pitems = getVisibleMenuItems();
+          projItem = pitems.find(function(el) { return el.textContent.trim().toLowerCase() === pName; });
+          if (projItem) break;
+          await delay(150);
+        }
+        if (!projItem) {
+          setStatus('[' + (queue.index + 1) + '] Project "' + queue.projectName + '" not in submenu');
+          document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+          await delay(240);
+          queue.index++;
+          writeMoveQueue(queue);
+          continue;
+        }
+        realClick(projItem);
+        queue.moved++;
+        queue.index++;
+        writeMoveQueue(queue);
+        var liveCb = document.querySelector('.bcm3-cb[data-conv-id="' + item.convId + '"]');
+        if (liveCb) liveCb.checked = false;
+        updateCount();
+        await delay(950);
+      }
+      setStatus('Done! Moved ' + queue.moved + '/' + total + ' to "' + queue.projectName + '"');
+      clearMoveQueue();
+      setTimeout(function() { location.reload(); }, 1200);
+    } finally {
+      bcm3QueueRunning = false;
+    }
+  }
   var lastClickedCheckbox = null;
   function handleCheckboxClick(e, cb) {
     if (e.shiftKey && lastClickedCheckbox && lastClickedCheckbox !== cb) {
@@ -160,75 +310,14 @@
     updateCount();
   }
   async function moveSelected() {
-    var checked = Array.from(document.querySelectorAll('.bcm3-cb:checked'));
     var sel = document.getElementById('bcm3-project-sel');
     var projectId = sel && sel.value;
     var projectName = sel && sel.options[sel.selectedIndex] && sel.options[sel.selectedIndex].text || '';
-    if (!checked.length) { setStatus('No chats selected'); return; }
     if (!projectId) { setStatus('No project selected'); return; }
-    setStatus('Starting: ' + checked.length + ' chats to "' + projectName + '"');
-    var moved = 0;
-    for (var i = 0; i < checked.length; i++) {
-      var cb = checked[i];
-      var wrap = cb.closest('.bcm3-wrap') || cb.parentElement;
-      var link = wrap && wrap.querySelector('a[href^="/c/"]');
-      if (!link) { setStatus('[' + (i+1) + '] No link found'); continue; }
-      var title = (cb.dataset.title || '').substring(0, 25);
-      try {
-        link.scrollIntoView({ behavior: 'instant', block: 'center' });
-        await delay(300);
-        realHover(link);
-        await delay(500);
-        var btn = link.querySelector('button.__menu-item-trailing-btn')
-          || link.querySelector('button[aria-label]')
-          || link.querySelector('button');
-        if (!btn) { setStatus('[' + (i+1) + '] No ... button for "' + title + '"'); continue; }
-        setStatus('[' + (i+1) + '/' + checked.length + '] Moving "' + title + '"...');
-        realClick(btn);
-        await delay(600);
-        var moveItem = null;
-        for (var w = 0; w < 20; w++) {
-          var items = Array.from(document.querySelectorAll('[role="menuitem"]'));
-          moveItem = items.find(function(el) { return el.textContent.trim().indexOf('Move to project') === 0; });
-          if (moveItem) break;
-          await delay(150);
-        }
-        if (!moveItem) {
-          setStatus('[' + (i+1) + '] "Move to project" not found');
-          document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
-          await delay(300);
-          continue;
-        }
-        realHover(moveItem);
-        realClick(moveItem);
-        await delay(600);
-        var projItem = null;
-        var pName = projectName.toLowerCase();
-        for (var w2 = 0; w2 < 15; w2++) {
-          var pitems = Array.from(document.querySelectorAll('[role="menuitem"]'));
-          projItem = pitems.find(function(el) { return el.textContent.trim().toLowerCase() === pName; });
-          if (projItem) break;
-          await delay(150);
-        }
-        if (!projItem) {
-          setStatus('[' + (i+1) + '] Project "' + projectName + '" not in submenu');
-          document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
-          await delay(300);
-          continue;
-        }
-        realClick(projItem);
-        moved++;
-        cb.checked = false;
-        updateCount();
-        setStatus('[' + (i+1) + '/' + checked.length + '] Moved "' + title + '"');
-        await delay(1200);
-      } catch (e) {
-        setStatus('[' + (i+1) + '] Error: ' + e.message);
-        document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
-        await delay(500);
-      }
-    }
-    setStatus('Done! Moved ' + moved + '/' + checked.length + ' to "' + projectName + '"');
+    var queue = enqueueCurrentSelection(projectId, projectName);
+    if (!queue.items.length) { setStatus('No chats selected'); clearMoveQueue(); return; }
+    setStatus('Starting: ' + queue.items.length + ' chats to "' + projectName + '"');
+    await processMoveQueue();
   }
   function init() {
     if (document.getElementById('bcm3-panel')) return;
@@ -297,6 +386,8 @@
     });
     window._bcmProjectObserver.observe(document.body, { childList: true, subtree: true });
     loadProjects();
+    // Resume queued moves after ChatGPT refresh/re-render.
+    setTimeout(processMoveQueue, 700);
   }
   window._bcmInit = init;
   setTimeout(init, 2000);
