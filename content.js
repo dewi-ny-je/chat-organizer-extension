@@ -55,7 +55,8 @@
       '#bcm3-count { margin:0 0 9px; color:#d4d4d4; font-size:12px; }',
       '#bcm3-panel select { width:100%; appearance:none; background:#171717; color:var(--bcm3-text); border:1px solid #333; border-radius:10px; padding:8px 10px; margin-bottom:8px; font-size:12px; }',
       '#bcm3-panel select:focus-visible, #bcm3-panel button:focus-visible { outline:2px solid var(--bcm3-focus); outline-offset:2px; }',
-      '#bcm3-panel button { width:100%; border:1px solid #333; border-radius:10px; cursor:pointer; padding:8px 10px; margin-bottom:6px; font-size:12px; font-weight:600; transition:transform .14s ease, opacity .14s ease, box-shadow .14s ease; }',
+      '#bcm3-panel button { width:100%; border:1px solid #333; border-radius:10px; cursor:pointer; padding:8px 10px; margin-bottom:6px; font-size:12px; font-weight:600; transition:transform .14s ease, opacity .14s ease, box-shadow .14s ease; display:inline-flex; align-items:center; justify-content:center; gap:7px; }',
+      '#bcm3-panel .bcm3-btn-icon { width:14px; height:14px; stroke:currentColor; stroke-width:2; fill:none; flex-shrink:0; }',
       '#bcm3-panel button:hover { transform:translateY(-1px); }',
       '#bcm3-panel button:active { transform:translateY(0); }',
       '#bcm3-move-btn { background:#fafafa; color:#111111; border-color:#fafafa; box-shadow:0 1px 0 rgba(255,255,255,.35) inset; }',
@@ -242,10 +243,10 @@
       '</div>' +
       '<div id="bcm3-count">Loading...</div>' +
       '<select id="bcm3-project-sel"><option>Loading...</option></select>' +
-      '<button id="bcm3-refresh-btn">↻ Refresh Projects</button>' +
-      '<button id="bcm3-selall-btn">☑ Select / Deselect All</button>' +
-      '<button id="bcm3-move-btn">➜ Move Selected to Project</button>' +
-      '<button id="bcm3-close-btn">✕ Close</button>' +
+      '<button id="bcm3-refresh-btn"><svg class="bcm3-btn-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 2v6h-6"></path><path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path><path d="M3 22v-6h6"></path><path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path></svg>Refresh Projects</button>' +
+      '<button id="bcm3-selall-btn"><svg class="bcm3-btn-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 11 3 3L22 4"></path><path d="m21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>Select / Deselect All</button>' +
+      '<button id="bcm3-move-btn"><svg class="bcm3-btn-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 14 3-3 3 3"></path><path d="M12 11v9"></path><path d="M2 10V5a2 2 0 0 1 2-2h3l2 3h11a2 2 0 0 1 2 2v2"></path></svg>Move Selected to Project</button>' +
+      '<button id="bcm3-close-btn"><svg class="bcm3-btn-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>Close</button>' +
       '<div id="bcm3-status">Ready</div>';
     document.body.appendChild(panel);
     document.getElementById('bcm3-selall-btn').addEventListener('click', function() {

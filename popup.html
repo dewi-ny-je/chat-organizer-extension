@@ -54,6 +54,10 @@
       font-size: 12px;
     }
     button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
       width: 100%;
       border: 1px solid transparent;
       border-radius: 10px;
@@ -65,6 +69,14 @@
       cursor: pointer;
       transition: transform .14s ease, box-shadow .14s ease, opacity .14s ease;
       box-shadow: 0 1px 0 rgba(255, 255, 255, 0.25) inset;
+    }
+    .btn-icon {
+      width: 14px;
+      height: 14px;
+      stroke: currentColor;
+      stroke-width: 2;
+      fill: none;
+      flex-shrink: 0;
     }
     button:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(255, 255, 255, 0.12); }
     button:active { transform: translateY(0); }
@@ -92,7 +104,15 @@
     <div class="badge">Extension</div>
     <h2>Bulk Chat Mover</h2>
     <p>Select multiple chats in ChatGPT and move them into a Project with one clean workflow.</p>
-    <button id="toggleBtn">◩ Open Panel in ChatGPT</button>
+    <button id="toggleBtn">
+      <svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M5 5h6v6H5z"></path>
+        <path d="M13 13h6v6h-6z"></path>
+        <path d="M5 13h6v6H5z"></path>
+        <path d="M13 5h6v6h-6z"></path>
+      </svg>
+      Open Panel in ChatGPT
+    </button>
     <div id="status"></div>
     <div class="hint">Works only on <code>chatgpt.com</code></div>
   </div>
