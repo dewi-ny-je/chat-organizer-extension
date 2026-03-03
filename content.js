@@ -515,13 +515,70 @@
     updateCount();
   }
   var lastProjectCount = 0;
-  function loadProjects() {
-    var projects = fetchAllProjects();
+  // Claude.ai: project links don't live in the sidebar DOM by default.
+  // Instead, temporarily open the "Add/Change project" modal on the first
+  // available chat, read the [role="option"] project names, then close it.
+  async function fetchProjectsViaClaudeModal() {
+    var chatLinks = Array.from(document.querySelectorAll(SITE.chatLinkSelector));
+    if (!chatLinks.length) return [];
+    var link = chatLinks[0];
+    link.scrollIntoView({ behavior: 'instant', block: 'center' });
+    await delay(200);
+    realHover(link);
+    await delay(400);
+    var row = link.closest('li') || link.parentElement;
+    var menuBtn = row && (
+      row.querySelector('button[aria-label*="More options"]') ||
+      row.querySelector('button[aria-label*="options" i]') ||
+      row.querySelector('button')
+    );
+    if (!menuBtn) return [];
+    realClick(menuBtn);
+    await delay(600);
+    // Find "Add to project" or "Change project" in the context menu
+    var menuItem = null;
+    for (var i = 0; i < 15; i++) {
+      var mitems = getVisibleMenuItems();
+      menuItem = mitems.find(function(el) {
+        var t = normalizeText(el.textContent);
+        return t === 'add to project' || t === 'change project';
+      });
+      if (menuItem) break;
+      await delay(150);
+    }
+    if (!menuItem) { dismissOpenMenus(); return []; }
+    realClick(menuItem);
+    await delay(700);
+    // Read [role="option"] items from the modal
+    var opts = [];
+    for (var j = 0; j < 20; j++) {
+      opts = Array.from(document.querySelectorAll('[role="option"]')).filter(isVisibleElement);
+      if (opts.length) break;
+      await delay(150);
+    }
+    var projects = opts.map(function(opt) {
+      var name = opt.textContent.trim();
+      return { id: name, name: name }; // name used as ID — matched by text in move workflow
+    }).filter(function(p) { return p.name; });
+    // Close the modal
+    document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
+    await delay(300);
+    return projects;
+  }
+  async function loadProjects(forceModal) {
     var sel = document.getElementById('bcm3-project-sel');
     if (!sel) return;
+    // Fast DOM scan first
+    var projects = fetchAllProjects();
+    // On Claude.ai, fall back to modal scraping when the user explicitly
+    // requests a refresh (forceModal) and the DOM scan came up empty.
+    if (!projects.length && SITE.site === 'claude' && forceModal) {
+      setStatus('Opening project picker to load list...');
+      projects = await fetchProjectsViaClaudeModal();
+    }
     if (projects.length === 0) {
       sel.innerHTML = '<option value="">No projects found — try Refresh</option>';
-      setStatus('No projects found. Try clicking Refresh after the page loads.');
+      setStatus('No projects found. Click Refresh to load from project picker.');
       lastProjectCount = 0;
       return;
     }
@@ -605,7 +662,7 @@
     });
     document.getElementById('bcm3-refresh-btn').addEventListener('click', function() {
       lastProjectCount = 0;
-      loadProjects();
+      loadProjects(true); // forceModal=true: scrape from picker if DOM scan is empty
     });
     document.getElementById('bcm3-move-btn').addEventListener('click', moveSelected);
     document.getElementById('bcm3-delete-btn').addEventListener('click', deleteSelected);
