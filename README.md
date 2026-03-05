@@ -1,6 +1,6 @@
 # Chat Organizer for ChatGPT & Claude
 
-> A Chrome extension that brings bulk chat management to ChatGPT and Claude — select, move, and delete multiple chats in seconds.
+> A Chrome extension that brings bulk chat management to ChatGPT, and extends Claude's existing bulk tools directly into the sidebar — select, move, and delete multiple chats in seconds.
 
 ![Manifest V3](https://img.shields.io/badge/Manifest-V3-blue?logo=googlechrome)
 ![Version](https://img.shields.io/badge/version-1.1-brightgreen)
@@ -9,7 +9,10 @@
 
 ---
 
-If you've ever had dozens (or hundreds) of chats cluttering your sidebar, you know how painful it is to manage them one by one. **Chat Organizer** fixes that. It injects a sleek management panel directly into the ChatGPT or Claude sidebar, letting you select chats in bulk and move or delete them with a single click.
+If you've ever had dozens (or hundreds) of chats cluttering your sidebar, you know how painful it is to manage them one by one. **Chat Organizer** fixes that.
+
+- **ChatGPT** has no native bulk management — the extension adds it entirely, injecting checkboxes and a control panel directly into the sidebar.
+- **Claude** has bulk selection built in, but only on the separate [All Chats](https://claude.ai/recents) page. The extension brings that same power into the sidebar so you never have to leave your current conversation.
 
 | ChatGPT sidebar | Extension popup | Panel in action |
 |---|---|---|
@@ -76,7 +79,7 @@ Since this extension isn't on the Chrome Web Store (yet), load it manually in a 
 ## File Structure
 
 ```
-chatgpt-chats-management-tool/
+chat-organizer-extension/
 ├── manifest.json    # Extension config, permissions, and host matching
 ├── popup.html       # Popup UI markup and styles
 ├── popup.js         # Panel toggle logic and popup state management
