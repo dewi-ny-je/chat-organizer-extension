@@ -695,8 +695,19 @@
   }
   async function moveSelected() { await startSelectedAction('move'); }
   async function deleteSelected() { await startSelectedAction('delete'); }
+  function isPanelEnabled() {
+    try {
+      return sessionStorage.getItem('bcm3-enabled') === 'true';
+    } catch(e) { return false; }
+  }
+
+  function setPanelEnabled(state) {
+    try {
+      sessionStorage.setItem('bcm3-enabled', state ? 'true' : 'false');
+    } catch(e) {}
+  }
   function init() {
-    window._bcmEnabled = true;
+    setPanelEnabled(true);
     if (document.getElementById('bcm3-panel')) return;
     injectStyle();
     var panel = document.createElement('div');
@@ -729,7 +740,7 @@
     document.getElementById('bcm3-move-btn').addEventListener('click', moveSelected);
     document.getElementById('bcm3-delete-btn').addEventListener('click', deleteSelected);
     document.getElementById('bcm3-close-btn').addEventListener('click', function() {
-      window._bcmEnabled = false;
+      setPanelEnabled(false);
       panel.remove();
       lastClickedCheckbox = null;
       var s = document.getElementById('bcm3-style');
@@ -770,8 +781,15 @@
     setTimeout(processMoveQueue, 2000);
   }
   window._bcmInit = init;
+  window._bcmTeardown = function() {
+    var closeBtn = document.getElementById('bcm3-close-btn');
+    if (closeBtn) closeBtn.click(); // Triggers the exact same cleanup as the close button
+  };
+  window._bcmIsActive = function() {
+    return !!document.getElementById('bcm3-panel');
+  };
   // Only auto-open when resuming an in-progress queued action (e.g., delete across reloads).
-  if (hasPendingQueue()) {
+  if (hasPendingQueue() || isPanelEnabled()) {
     setTimeout(init, 2000);
   }
   // Re-run on SPA navigation only when panel was explicitly enabled by the user
@@ -781,7 +799,7 @@
     if (location.href !== lastUrl) {
       lastUrl = location.href;
       setTimeout(function() {
-        if (!document.getElementById('bcm3-panel') && (window._bcmEnabled || hasPendingQueue())) init();
+        if (!document.getElementById('bcm3-panel') && (isPanelEnabled() || hasPendingQueue())) init();
       }, 1500);
     }
   }).observe(document.body, { childList: true, subtree: true });
